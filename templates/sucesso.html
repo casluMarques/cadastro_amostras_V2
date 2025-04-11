@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro Realizado com Sucesso</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 15px;
+        }
+        .container {
+            max-width: 100%;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #198754;
+            margin-bottom: 20px;
+            font-size: calc(1.3rem + 1vw);
+        }
+        .qr-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .qr-container img {
+            max-width: 80%;
+            height: auto;
+        }
+        .qr-link {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+        .btn {
+            margin: 10px 0;
+            min-height: 44px;
+            display: block;
+            width: 100%;
+        }
+        .success-icon {
+            font-size: calc(3rem + 1vw);
+            color: #198754;
+            margin-bottom: 15px;
+        }
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                padding: 30px;
+                margin: 20px auto;
+            }
+            .btn {
+                display: inline-block;
+                width: auto;
+                margin: 10px;
+            }
+            .qr-container img {
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✓</div>
+        <h1>Cadastro Realizado com Sucesso!</h1>
+        <p class="lead">A amostra foi registrada com o ID: <strong>{{ amostra_id }}</strong></p>
+        
+        <div class="qr-container">
+            <h4>QR Code para acesso rápido:</h4>
+            <img src="data:image/png;base64,{{ qr_img }}" alt="QR Code" class="img-fluid">
+            <div class="qr-link">
+                <a href="{{ amostra_url }}" target="_blank">{{ amostra_url }}</a>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="data:image/png;base64,{{ qr_img }}" download="amostra_{{ amostra_id }}_qrcode.png" class="btn btn-primary">
+                Download do QR Code
+            </a>
+            
+            <a href="/" class="btn btn-outline-secondary">Voltar para o início</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

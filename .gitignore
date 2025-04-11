@@ -1,0 +1,5 @@
+# Arquivo com variáveis de ambiente
+.env
+
+# Arquivos com credenciais do Google
+client_secret_*.json
