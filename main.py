@@ -6,10 +6,15 @@ import io
 import base64
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+#carregando as credenciais google do arquivo creds.env
+env_path = Path(__file__).parent / "creds.env"
+load_dotenv(dotenv_path=env_path)
 client_id = os.getenv("GOOGLE_CLIENT_ID")
-client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+client_secret = os.getenv("CLIENT_SECRET")
+
+print(client_id, client_secret)
 
 app = Flask(__name__)
 
@@ -45,7 +50,11 @@ def authorize_google():
     resp = google.get('https://openidconnect.googleapis.com/v1/userinfo')
     user_info = resp.json()
     session['user'] = user_info
-    return redirect('/registro')
+    return redirect('/start')
+
+@app.route('/start')
+def start():
+    return render_template('redirect.html')
 
 #carrega o form, verificanso se o usuário está autenticado
 @app.route('/registro')
@@ -154,7 +163,28 @@ def amostrar_amostra(amostra_id):
     else:
         return render_template('erro.html', message="Amostra não encontrada.")
 
+@app.route('/pesquisa')
+def pesquisa():
+    return render_template('pesquisa.html')
 
+@app.route('/resultado_pesquisa', methods=['GET'])
+def resultado_pesquisa():
+    #recuperando o termo para pesquisa
+    pesquisa = request.args.get("termo")
+    #pesquisando no BD
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT * FROM amostras
+        WHERE
+            CAST(id AS TEXT) LIKE ? OR
+            nome LIKE ? OR
+            fabricante LIKE ? OR
+            numero_nf LIKE ?
+    """, (f'%{pesquisa}%', f'%{pesquisa}%', f'%{pesquisa}%', f'%{pesquisa}%'))
+    resultados = cursor.fetchall()
+    conn.close()
+    return render_template('resultado_pesquisa.html', resultados = resultados, termo = pesquisa)
 
 
 
