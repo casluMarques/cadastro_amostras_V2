@@ -1,0 +1,4 @@
+Flask
+qrcode[pil]
+authlib
+python-dotenv
