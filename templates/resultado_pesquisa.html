@@ -61,7 +61,8 @@
                         <td>{{ row[8] }}</td>
                         <td>
                             <a href="/amostras/{{ row[0] }}" class="btn btn-sm btn-primary">Visualizar</a>
-                        </td>
+                            <a href="/amostras/{{ row[0] }}/alterar_status" class="btn btn-sm btn-warning ms-1">Alterar Status</a>
+                        </td>                        
                     </tr>
                     {% endfor %}
                 </tbody>

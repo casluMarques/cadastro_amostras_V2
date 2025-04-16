@@ -131,7 +131,7 @@ def amostrar_amostra(amostra_id):
     cursor = conn.cursor()
     cursor.execute("""
     SELECT id, nome, fabricante, processo, data_entrada, tipo, numero_nf,
-           data_retirada, status, responsavel_cadastro
+           data_retirada, status, responsavel_cadastro, responsavel_alteracao
     FROM amostras WHERE id = ?
 """, (amostra_id,))
     row = cursor.fetchone()
@@ -148,7 +148,9 @@ def amostrar_amostra(amostra_id):
             "numero_nf": row[6],
             "data_retirada": row[7],
             "status": row[8],
-            "responsavel_cadastro": row[9]
+            "responsavel_cadastro": row[9],
+            "responsavel_alteracao": row[10]
+
 }
 
 
@@ -163,10 +165,12 @@ def amostrar_amostra(amostra_id):
     else:
         return render_template('erro.html', message="Amostra não encontrada.")
 
+#rota para form de pesquisa
 @app.route('/pesquisa')
 def pesquisa():
     return render_template('pesquisa.html')
 
+#rota que retorna os dados pesquisados
 @app.route('/resultado_pesquisa', methods=['GET'])
 def resultado_pesquisa():
     #recuperando o termo para pesquisa
@@ -186,6 +190,44 @@ def resultado_pesquisa():
     conn.close()
     return render_template('resultado_pesquisa.html', resultados = resultados, termo = pesquisa)
 
+#rota para alteração de status
+@app.route('/amostras/<int:amostra_id>/alterar_status', methods=['GET', 'POST'])
+def alterar_status(amostra_id):
+    if 'user' not in session:
+        return redirect('/login/google')
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    #depois de salvar, altera o banco
+    if request.method == 'POST':
+        novo_status = request.form.get("status")
+        data_retirada = request.form.get("data_retirada") if novo_status == "Devolvido" else None
+        responsavel = session['user'].get('name') or session['user'].get('email')
+
+        cursor.execute("""
+            UPDATE amostras
+            SET status = ?, data_retirada = ?, responsavel_alteracao = ?
+            WHERE id = ?
+        """, (novo_status, data_retirada, responsavel, amostra_id))
+        conn.commit()
+        conn.close()
+        return redirect(f'/amostras/{amostra_id}')
+
+    #pega as informações do form
+    cursor.execute("SELECT id, nome, status FROM amostras WHERE id = ?", (amostra_id,))
+    amostra = cursor.fetchone()
+    conn.close()
+
+    if not amostra:
+        return render_template('erro.html', message="Amostra não encontrada.")
+
+    #template a ser carrgeado para modificação do status
+    return render_template('alterar_status.html', amostra={
+        "id": amostra[0],
+        "nome": amostra[1],
+        "status": amostra[2]
+    })
 
 
 if __name__ == '__main__':

@@ -16,7 +16,8 @@ def create_table():
         numero_nf TEXT,
         data_retirada TEXT,
         status TEXT DEFAULT 'Em bancada',
-        responsavel_cadastro TEXT NOT NULL
+        responsavel_cadastro TEXT NOT NULL,
+        responsavel_alteracao TEXT 
     )
     """)
     conn.commit()
