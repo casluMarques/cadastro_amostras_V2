@@ -1,4 +1,6 @@
 Flask
-qrcode[pil]
-authlib
-python-dotenv
+Flask-Session
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+requests
