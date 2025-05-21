@@ -7,6 +7,13 @@ import base64
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+import re
+
+
+#função usada para verificar caracteres especiais
+def contem_caracteres_invalidos(texto):
+    return bool(re.search(r"[\"\'%;#]", texto))
+
 
 #carregando as credenciais google do arquivo creds.env
 env_path = Path(__file__).parent / "creds.env"
@@ -82,7 +89,6 @@ def index():
 @app.route('/registrar', methods=['POST'])
 def registrar_amostra():
     try:
-        # Captura os dados do formulário
         nome_amostra = request.form.get('nome da amostra')
         fabricante = request.form.get('fabricante')
         processo = int(request.form.get('processo'))
@@ -91,7 +97,24 @@ def registrar_amostra():
         nf_opcao = request.form.get('nf_opcao')
         numero_nf = None
 
-        # Diretório onde a imagem será salva
+        # Verificar caracteres especiais
+        for campo_nome, campo_valor in [('Nome da amostra', nome_amostra), ('Fabricante', fabricante)]:
+            if contem_caracteres_invalidos(campo_valor):
+                raise Exception(f"O campo '{campo_nome}' contém caracteres inválidos: ', \", %, ; ou #.")
+
+        # Conectar ao banco para verificar duplicidade
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM amostras WHERE processo = %s", (processo,))
+        existe = cursor.fetchone()[0]
+
+        if existe > 0:
+            # Fecha conexão antes de renderizar
+            cursor.close()
+            conn.close()
+            return render_template('duplicado.html', processo=processo)
+
+        # Criação do diretório
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
         if nf_opcao == 'texto':
@@ -106,12 +129,9 @@ def registrar_amostra():
                 numero_nf = f"Imagem salva como {nome_arquivo}"
             else:
                 raise Exception("Arquivo de imagem da Nota Fiscal não enviado!")
-        
+
         responsavel_cadastro = session['user'].get('name') or session['user'].get('email') or "Desconhecido"
 
-        # Conectando e salvando no banco
-        conn = get_db_connection()
-        cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO amostras (nome, fabricante, processo, data_entrada, tipo, numero_nf, responsavel_cadastro)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -120,6 +140,19 @@ def registrar_amostra():
         amostra_id = cursor.lastrowid
         cursor.close()
         conn.close()
+
+        # Gera QR Code
+        qr_url = f'{API_URL}/amostras/{amostra_id}'
+        qr_img = qrcode.make(qr_url)
+        img_io = io.BytesIO()
+        qr_img.save(img_io, 'PNG')
+        img_io.seek(0)
+        img_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+
+        return render_template('sucesso.html', amostra_id=amostra_id, qr_img=img_base64, amostra_url=qr_url)
+
+    except Exception as e:
+        return render_template('erro.html', message=str(e))
 
         # Gera o QR Code
         qr_url = f'{API_URL}/amostras/{amostra_id}'

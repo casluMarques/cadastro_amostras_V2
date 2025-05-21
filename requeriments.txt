@@ -4,3 +4,8 @@ google-auth
 google-auth-oauthlib
 google-auth-httplib2
 requests
+authlib
+mysql-connector-python
+qrcode
+python-dotenv
+
