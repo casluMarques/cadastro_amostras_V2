@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, send_file, session, url_for, redirect
 from authlib.integrations.flask_client import OAuth
 import mysql.connector
@@ -8,11 +9,9 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import re
+import aux_func
+import db_connect
 
-
-#função usada para verificar caracteres especiais
-def contem_caracteres_invalidos(texto):
-    return bool(re.search(r"[\"\'%;#]", texto))
 
 
 #carregando as credenciais google do arquivo creds.env
@@ -21,25 +20,14 @@ load_dotenv(dotenv_path=env_path)
 client_id = os.getenv("GOOGLE_CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 
-#carregando as credenciais do banco de dados para acesso
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
-
-#caminho no servidor para salvar as imagens das nf's
-UPLOAD_FOLDER = '/home/notas_fiscais/'
-
-#função para conexão com o banco
-def get_db_connection():
-    return mysql.connector.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME
-    )
+#rota de upload
+UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER")
 
 app = Flask(__name__)
+
+app.secret_key = os.getenv("FLASK_KEY")
+
+print(app.secret_key)
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -50,8 +38,9 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
-app.secret_key = client_secret
+
 API_URL = "http://127.0.0.1:5000"
+
 
 
 @app.route('/')
@@ -98,12 +87,12 @@ def registrar_amostra():
         numero_nf = None
 
         # Verificar caracteres especiais
-        for campo_nome, campo_valor in [('Nome da amostra', nome_amostra), ('Fabricante', fabricante)]:
-            if contem_caracteres_invalidos(campo_valor):
+        for campo_nome, campo_valor in [('Nome da amostra', nome_amostra), ('Fabricante', fabricante), ('Tipo', tipo)]:
+            if aux_func.contem_caracteres_invalidos(campo_valor):
                 raise Exception(f"O campo '{campo_nome}' contém caracteres inválidos: ', \", %, ; ou #.")
 
         # Conectar ao banco para verificar duplicidade
-        conn = get_db_connection()
+        conn = db_connect.get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM amostras WHERE processo = %s", (processo,))
         existe = cursor.fetchone()[0]
@@ -186,7 +175,7 @@ def download_qr(amostra_id):
 #visualização dos dados qr code / dados de amostras
 @app.route('/amostras/<int:amostra_id>')
 def amostrar_amostra(amostra_id):
-    conn = get_db_connection()
+    conn = db_connect.get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id, nome, fabricante, processo, data_entrada, tipo, numero_nf,
@@ -256,7 +245,23 @@ def servir_nota_fiscal(processo):
 #rota para form de pesquisa
 @app.route('/pesquisa')
 def pesquisa():
-    return render_template('pesquisa.html')
+
+    #verifica se o filtro foi selecionado
+    status_filtro = request.args.get('status')
+
+    conn = db_connect.get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    #se for selecionado, aplica o filtro
+    if status_filtro and status_filtro in ['Em bancada', 'Sala Cofre', 'Devolvido']:
+        cursor.execute("SELECT * FROM amostras WHERE status = %s", (status_filtro,))
+    #Do contrário, apenas mostra todas as amostras
+    else:
+        cursor.execute("SELECT * FROM amostras")
+
+    equipamentos = cursor.fetchall()
+    conn.close()
+
+    return render_template('pesquisa.html', equipamentos=equipamentos, status_filtro=status_filtro) #passando para o html os dados necessários
 
 #rota que retorna os dados pesquisados
 @app.route('/resultado_pesquisa', methods=['GET'])
@@ -264,7 +269,7 @@ def resultado_pesquisa():
     #recuperando o termo para pesquisa
     pesquisa = request.args.get("termo")
     #pesquisando no BD
-    conn = get_db_connection()
+    conn = db_connect.get_db_connection()
     cursor = conn.cursor()
     cursor.execute("""
         SELECT * FROM amostras
@@ -284,7 +289,7 @@ def alterar_status(amostra_id):
     if 'user' not in session:
         return redirect('/login/google')
 
-    conn = get_db_connection()
+    conn = db_connect.get_db_connection()
     cursor = conn.cursor()
 
     #depois de salvar, altera o banco
@@ -316,8 +321,3 @@ def alterar_status(amostra_id):
         "nome": amostra[1],
         "status": amostra[2]
     })
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
-    
