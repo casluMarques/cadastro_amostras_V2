@@ -101,7 +101,8 @@ def registrar_amostra():
             # Fecha conexão antes de renderizar
             cursor.close()
             conn.close()
-            return render_template('duplicado.html', processo=processo)
+            dados_do_formulario = request.form.to_dict()
+            return render_template('duplicado.html', processo=processo, dados=dados_do_formulario)
 
         # Criação do diretório
         os.makedirs(UPLOAD_FOLDER, exist_ok=True)

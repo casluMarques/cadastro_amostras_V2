@@ -54,7 +54,7 @@
                 <button type="submit" class="btn btn-secondary">Cancelar</button>
             </form>
             <form action="/registrar" method="post" enctype="multipart/form-data">
-                {% for key, value in request.form.items() %}
+                {% for key, value in dados.items() %}
                     <input type="hidden" name="{{ key }}" value="{{ value }}">
                 {% endfor %}
                 <button type="submit" class="btn btn-primary">Continuar</button>

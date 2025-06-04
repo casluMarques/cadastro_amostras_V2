@@ -23,11 +23,19 @@
             margin-bottom: 25px;
             text-align: center;
         }
+        /* Removido width 100% dos botões para não forçar largura */
         .btn {
-            width: 100%;
+            /* width: 100%; */
         }
         table {
             margin-top: 20px;
+        }
+        /* Ajuste para botões pequenos */
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.2rem;
         }
     </style>
 </head>
@@ -64,6 +72,7 @@
                 <th>Fabricante</th>
                 <th>Processo</th>
                 <th>Status</th>
+                <th>Ação</th>
             </tr>
         </thead>
         <tbody>
@@ -74,6 +83,10 @@
                 <td>{{ eq.fabricante }}</td>
                 <td>{{ eq.processo }}</td>
                 <td>{{ eq.status }}</td>
+                <td class="d-flex justify-content-center gap-2">
+                    <a href="/amostras/{{ eq.id }}" class="btn btn-sm btn-primary">Visualizar Amostra</a>
+                    <a href="/amostras/{{ eq.id }}/alterar_status" class="btn btn-sm btn-warning">Alterar Status</a>
+                </td>
             </tr>
         {% endfor %}
         </tbody>
