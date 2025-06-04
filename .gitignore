@@ -3,3 +3,7 @@
 
 # Arquivos com credenciais do Google
 client_secret_*.json
+
+#pasta com os dados salvos do mariadb e logs
+mariadb-data/
+

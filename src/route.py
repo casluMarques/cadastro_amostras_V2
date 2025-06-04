@@ -15,7 +15,7 @@ import db_connect
 
 
 #carregando as credenciais google do arquivo creds.env
-env_path = Path(__file__).parent / "creds.env"
+env_path = Path(__file__) / "creds.env"
 load_dotenv(dotenv_path=env_path)
 client_id = os.getenv("GOOGLE_CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
@@ -39,7 +39,7 @@ google = oauth.register(
 )
 
 
-API_URL = "http://127.0.0.1:5000"
+API_URL = "http://172.16.15.71"
 
 
 

@@ -59,4 +59,7 @@ def create_database_and_table():
     conn.close()
 
 if __name__ == "__main__":
-    create_database_and_table()
+    create_db = os.getenv("CREATE_DB")
+    print(type(create_db))
+    if create_db == '1':
+        create_database_and_table()

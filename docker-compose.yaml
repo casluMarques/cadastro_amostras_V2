@@ -1,0 +1,40 @@
+services:
+  app-back:
+    image: python:3.9.22-alpine3.22
+    container_name: back-end
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - FLASK_KEY=${FLASK_KEY}
+      - UPLOAD_FOLDER=${UPLOAD_FOLDER}
+      - DB_HOST=db
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - CREATE_DB=${CREATE_DB}
+    user: root
+    volumes:
+      - ./:/app
+    working_dir: /app
+    entrypoint: sh -c "pip install -r requirements.txt && python3 src/create_db.py && python3 src/main.py"
+    restart: unless-stopped
+    ports:
+      - "80:5000"
+
+  db:
+    image: mariadb:latest
+    container_name: db
+    restart: unless-stopped
+    environment:
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1
+    volumes:
+      - "./mariadb-data/data:/var/lib/mysql"
+      - "./mariadb-data/logs:/var/log/mysql"
+    ports:
+      - "3306:3306"
+
+networks:
+  default:

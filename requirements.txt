@@ -8,4 +8,5 @@ authlib
 mysql-connector-python
 qrcode
 python-dotenv
+Pillow
 
